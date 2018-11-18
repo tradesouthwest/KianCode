@@ -104,7 +104,7 @@ function kiancode_quiz_include_code( $atts, $content = null )
 function kiancode_shortcode_break_paragraph_tags( $new_content ) 
 {
     $new_content = '';
-    global $post;
+    global $post, $content;
     if ( ( $post instanceof WP_Post ) && 
          ( $post->post_type == 'sfwd-quiz' ) ) 
     {
@@ -125,71 +125,35 @@ function kiancode_shortcode_break_paragraph_tags( $new_content )
 }
 add_filter( 'the_content', 'kiancode_shortcode_break_paragraph_tags', 99 ); 
 
+//Prevent LearnDash from converting the answer before we get it
+add_filter('learndash_quiz_question_cloze_answers_to_lowercase', '__return_false' );
 
 /**
  * LearnDash filter to prevent converting answer values to lowercase
- * 
+ *
  * @possibly use ld_adv_quiz_pro_ajax() {
  * @uses stripslashes( strtolower( trim( $userResponse ) ) )
  * @since 1.0
  * @from WpProQuiz_View_FrontQuiz.php
  * post_type=sfwd-quiz
  */
-function learndash_quiz_remove_case_sensitive( 
-                $user_answer_formatted = true )
-{ 
-  
-    $_question     =  get_post_meta( $post->ID, '_question', true );
-    $shortcode     = 'code'; 
-    $has_shortcode = kiancode_asc_shortcode_exists( $shortcode ); 
-     
-    if( isset( $_question ) && $has_shortcode === true );
-    {  
-    $user_answer_formatted = false;
+function kiancode_learndash_quiz_recheck_using_original( $checked, $type, $answer,  $correctArray, $answerIndex, $questionModel )
+{
+    $shortcode='[code]';
+    $has_shortcode = strpos($questionModel->getAnswerData(true), $shortcode);
+    if( $has_shortcode)
+    {
+        return in_array( $answer, $correctArray );
     }
-        
-    // Defaults return $convert_answer_to_lower
-    return $user_answer_formatted;
-}
-add_filter( 'learndash_quiz_question_cloze_answers_to_lowercase', 
-            'learndash_quiz_remove_case_sensitive', 12 );    
 
-/*
-* $inits = new LearnDash_Shortcodes_Section_quizinfo; 
-  $inits->shortcodes_option_fields['quiz'][ 
- * 
- 
- */
+    $lower_correct=array_map('strtolower', $correctArray);
+    $lower_answer=strtolower($answer);
 
-/**
- * Check if a shortcode is already registered
- *
- * @since 1.0
- *
- * @param $shortcode string The shortcode slug to test
- *
- * @return void
- */
-function kiancode_asc_shortcode_exists( $shortcode ) {
-    global $shortcode_tags, $_shortcode_tags;
-    $_shortcode_tags = $shortcode_tags;
-    $shortcodes = array( $_shortcode_tags );
-	//echo '<pre>'; var_dump($shortcode_tags); echo '</pre>';
- 
-	if ( ! $shortcode ) $short = false;
- 
-	if ( array_key_exists( $shortcode, $shortcodes ) ) : 
-        $short = true; 
-    else:
- 
-    $short = false;
-    endif;
-    if ( isset( $_shortcode_tags ) ) {
-        $shortcode_tags = $_shortcode_tags;
-    }
-    return $short;
+    return in_array($lower_answer, $lower_correct);
+
 }
 
+add_filter( 'learndash_quiz_check_answer', 'kiancode_learndash_quiz_recheck_using_original', 15, 6 );
 
 //Adding CSS inline style to an existing CSS stylesheet
 function kiancode_add_inline_css() {
