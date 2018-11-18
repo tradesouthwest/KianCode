@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Plugin Name: KianCode
  * Plugin URI: https://
  * Description: Creates new capabilities of deafult LearnDash Quiz
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Tradesouthwest
  * Author URI: https://tradesouthwest.com
  * Text Domain: kiancode
